@@ -1,0 +1,60 @@
+// datasource : la base de données SQLite
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// générateur du client Prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Modèle Utilisateur
+model Utilisateur {
+  id        Int      @id @default(autoincrement()) // Identifiant unique
+  nom       String   // Nom de l'utilisateur
+  email     String   @unique // Email unique
+  password  String   // Mot de passe
+  notes     Note[]   // Relation 1-N avec les notes
+}
+
+// Modèle Categorie
+model Categorie {
+  id        Int      @id @default(autoincrement()) // Identifiant unique
+  nom       String   @unique // Nom de la catégorie
+  notes     Note[]   // Relation 1-N avec les notes
+}
+
+// Modèle Tag
+model Tag {
+  id        Int      @id @default(autoincrement()) // Identifiant unique
+  nom       String   @unique // Nom du tag
+  notes     Note[]   @relation("NoteTags") // Relation N-M avec les notes
+  noteTags  NoteTags[] // Relation avec NoteTags
+}
+
+// Modèle Note
+model Note {
+  id          Int        @id @default(autoincrement()) // Identifiant unique de la note
+  titre       String     // Titre de la note
+  contenu     String     // Contenu de la note
+  createdAt   DateTime   @default(now()) // Date de création
+  updatedAt   DateTime   @updatedAt // Date de mise à jour
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id]) // Relation 1-N avec Utilisateur
+  utilisateurId Int // Clé étrangère de l'utilisateur
+  categorie   Categorie? @relation(fields: [categorieId], references: [id]) // Relation 1-N avec Categorie
+  categorieId Int? // Clé étrangère de la catégorie (optionnel)
+  tags        Tag[]      @relation("NoteTags") // Relation N-M avec les tags
+  noteTags    NoteTags[] // Relation avec NoteTags
+}
+
+// Table de jointure NoteTags pour gérer la relation many-to-many entre Note et Tag
+model NoteTags {
+  noteId Int // Clé étrangère vers la table Note
+  tagId  Int // Clé étrangère vers la table Tag
+  note   Note @relation(fields: [noteId], references: [id]) // Relation avec Note
+  tag    Tag  @relation(fields: [tagId], references: [id]) // Relation avec Tag
+
+  @@id([noteId, tagId]) // Définition de la clé primaire composite
+}
+
